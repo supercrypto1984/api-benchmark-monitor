@@ -85,10 +85,42 @@ async def main():
         "test_results": results
     }
     
-    # 保存结果
+    # 保存 JSON
     with open("api_stats.json", "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
-    print("测试数据已更新。")
+        
+    # 自动更新 README.md 中的表格
+    try:
+        if os.path.exists("README.md"):
+            with open("README.md", "r", encoding="utf-8") as f:
+                content = f.read()
+            
+            table_header = "| 接口类型 | 首字延迟 (ms) | 总耗时 (ms) | 状态 |"
+            table_separator = "| :--- | :--- | :--- | :--- |"
+            rows = []
+            for r in results:
+                if r["status"] == "Success":
+                    rows.append(f"| {r['name']} | {r['ttfb']} | {r['total_time']} | ✅ 正常 |")
+                else:
+                    # 简化显示报错
+                    err_msg = r.get('error','').split('{')[0]
+                    rows.append(f"| {r['name']} | - | - | ❌ 失败 ({err_msg.strip()}) |")
+            
+            new_table = f"## 📈 最新测试结果 (更新时间: {output['last_update']} UTC)\n\n{table_header}\n{table_separator}\n" + "\n".join(rows)
+            
+            if "## 📈 最新测试结果" in content:
+                parts = content.split("## 📈 最新测试结果")
+                updated_content = parts[0] + new_table
+            else:
+                updated_content = content + "\n\n" + new_table
+                
+            with open("README.md", "w", encoding="utf-8") as f:
+                f.write(updated_content)
+            print("README.md 表格已更新。")
+    except Exception as e:
+        print(f"更新 README 失败: {e}")
+
+    print("测试完成。数据已汇总。")
 
 if __name__ == "__main__":
     asyncio.run(main())
