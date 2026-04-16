@@ -1,16 +1,15 @@
 {
-  "last_update": "2026-04-16 16:24:48",
+  "last_update": "2026-04-16 16:27:21",
   "test_results": [
     {
-      "name": "上游渠道商 (Upstream)",
-      "ttfb": 2270,
-      "total_time": 9860,
-      "text_sample": "...",
+      "name": "官方上游 (Upstream)",
+      "ttfb": 2995,
+      "total_time": 9582,
       "status": "Success"
     },
     {
-      "name": "我们的平台 (Our Proxy)",
-      "error": "Error 503: {\"error\":{\"code\":\"model_not_found\",\"message\":\"No available channel for model gpt-5.4 under group vip (distributor) (request id: 202604161624385000698698268d9d6eeJW0zDb)\",\"type\":\"new_api_error\"}}",
+      "name": "我们的接口 (普通用户)",
+      "error": "Error 503",
       "status": "Failed"
     }
   ]
