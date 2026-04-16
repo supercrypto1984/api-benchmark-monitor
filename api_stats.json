@@ -1,10 +1,10 @@
 {
-  "last_update": "2026-04-16 17:01:32",
+  "last_update": "2026-04-16 18:55:44",
   "test_results": [
     {
       "name": "官方上游 (Upstream)",
-      "ttfb": 2654,
-      "total_time": 9221,
+      "ttfb": 2034,
+      "total_time": 7160,
       "status": "Success"
     },
     {
