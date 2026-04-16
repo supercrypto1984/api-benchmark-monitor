@@ -1,0 +1,38 @@
+name: API Performance Monitor
+
+on:
+  schedule:
+    - cron: '0 * * * *' # 每小时运行一次
+  workflow_dispatch: # 支持手动运行
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 必须，用于推送结果回仓库
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install httpx
+
+      - name: Run benchmark
+        env:
+          OFFICIAL_KEY: ${{ secrets.OFFICIAL_KEY }}
+          PROXY_KEY: ${{ secrets.PROXY_KEY }}
+          # 建议将您的中转 URL 也设置在 Secrets 中，或在此直接替换
+          PROXY_API_URL: ${{ secrets.PROXY_API_URL }}
+        run: python scripts/api_benchmark.py
+
+      - name: Commit and Push results
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add api_stats.json
+          git commit -m "chore: update api stats [skip ci]" || exit 0
+          git push
