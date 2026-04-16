@@ -1,0 +1,15 @@
+{
+  "last_update": "2026-04-16 15:55:12",
+  "test_results": [
+    {
+      "name": "上游渠道商 (Upstream)",
+      "error": "Error 500: {\"error\":{\"message\":\"input is required (request id: 20260416155512228288178268d9d6DGuLgsrq)\",\"type\":\"new_api_error\",\"param\":\"\",\"code\":\"invalid_request\"}}",
+      "status": "Failed"
+    },
+    {
+      "name": "我们的平台 (Our Proxy)",
+      "error": "Error 503: {\"error\":{\"code\":\"model_not_found\",\"message\":\"No available channel for model gpt-5.4 under group vip (distributor) (request id: 202604161555103436393208268d9d6Cf7oTHEw)\",\"type\":\"new_api_error\"}}",
+      "status": "Failed"
+    }
+  ]
+}
