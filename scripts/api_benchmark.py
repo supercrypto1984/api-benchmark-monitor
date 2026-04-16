@@ -20,7 +20,13 @@ async def test_api(client, name, url, key):
     elif not url.endswith("/v1/responses") and not url.endswith("/responses"):
         url = url.rstrip("/") + "/v1/responses"
     
-    payload = {"model": MODEL, "messages": [{"role": "user", "content": PROMPT}], "stream": True}
+    # 为了兼容上游 /v1/responses 接口，我们同时发送 input 和 messages
+    payload = {
+        "model": MODEL,
+        "input": PROMPT, # 针对上游 500 报错进行兼容
+        "messages": [{"role": "user", "content": PROMPT}],
+        "stream": True
+    }
     
     start = time.perf_counter()
     ttfb = None
