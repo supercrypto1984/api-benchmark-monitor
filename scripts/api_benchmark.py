@@ -5,7 +5,7 @@ import json
 import os
 from datetime import datetime
 
-# 配置 - 优先从环境变量读取，否则使用默认值
+# 配置
 UPSTREAM_URL = os.getenv("UPSTREAM_URL", "https://model.zhengshuyun.net/v1/responses")
 PROXY_URL = os.getenv("PROXY_URL", "http://141.148.136.194:8059/v1/responses")
 PROMPT = "请写一篇200字左右的关于人工智能（AI）的简要介绍，涵盖其定义、应用领域及未来潜力。"
@@ -14,70 +14,56 @@ MODEL = os.getenv("MODEL_NAME", "gpt-5.4")
 async def test_api(client, name, url, key):
     headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     
-    # 确保 URL 正确指向 responses 接口
+    # 确保 URL 正确
     if "/v1/chat/completions" in url:
         url = url.replace("/v1/chat/completions", "/v1/responses")
     elif not url.endswith("/v1/responses") and not url.endswith("/responses"):
         url = url.rstrip("/") + "/v1/responses"
     
-    # 为了兼容上游 /v1/responses 接口，我们同时发送 input 和 messages
     payload = {
         "model": MODEL,
-        "input": PROMPT, # 针对上游 500 报错进行兼容
+        "input": PROMPT,
         "messages": [{"role": "user", "content": PROMPT}],
         "stream": True
     }
     
     start = time.perf_counter()
     ttfb = None
-    full_text = ""
     
     try:
         async with client.stream("POST", url, headers=headers, json=payload, timeout=30.0) as resp:
             if resp.status_code != 200: 
                 error_body = await resp.aread()
-                return {"name": name, "error": f"Error {resp.status_code}: {error_body.decode()}", "status": "Failed"}
+                return {"name": name, "error": f"Error {resp.status_code}", "status": "Failed"}
             
             async for line in resp.aiter_lines():
                 if not ttfb: ttfb = time.perf_counter() - start
                 if line.startswith("data: ") and " [DONE]" not in line:
-                    try:
-                        data = json.loads(line[6:])
-                        if 'choices' in data and len(data['choices']) > 0:
-                            choice = data['choices'][0]
-                            content = ""
-                            if 'delta' in choice:
-                                content = choice['delta'].get('content', '')
-                            elif 'message' in choice:
-                                content = choice['message'].get('content', '')
-                            full_text += content
-                    except: pass
+                    pass # 仅测试速度，不处理文字
         
         total_time = time.perf_counter() - start
         return {
             "name": name,
             "ttfb": int(ttfb * 1000),
             "total_time": int(total_time * 1000),
-            "text_sample": full_text.strip()[:200] + "...",
             "status": "Success"
         }
     except Exception as e:
-        return {"name": name, "error": str(e), "status": "Failed"}
+        return {"name": name, "error": "Timeout/Network Error", "status": "Failed"}
 
 async def main():
-    # 从 Secrets 中获取 Key
     upstream_key = os.getenv("UPSTREAM_KEY")
     proxy_key = os.getenv("PROXY_KEY")
     
     if not upstream_key or not proxy_key:
-        print("错误: 请先在 GitHub Secrets 中设置 UPSTREAM_KEY 和 PROXY_KEY")
+        print("Error: Keys not set")
         return
 
     async with httpx.AsyncClient(verify=False) as client:
-        print(f"开始测试...\n上游地址: {UPSTREAM_URL}\n中转地址: {PROXY_URL}\n")
+        # 并行执行：对比上游和我们（以普通用户身份）
         results = await asyncio.gather(
-            test_api(client, "上游渠道商 (Upstream)", UPSTREAM_URL, upstream_key),
-            test_api(client, "我们的平台 (Our Proxy)", PROXY_URL, proxy_key)
+            test_api(client, "官方上游 (Upstream)", UPSTREAM_URL, upstream_key),
+            test_api(client, "我们的接口 (普通用户)", PROXY_URL, proxy_key)
         )
     
     output = {
@@ -89,38 +75,33 @@ async def main():
     with open("api_stats.json", "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
         
-    # 自动更新 README.md 中的表格
+    # 自动更新 README.md
     try:
         if os.path.exists("README.md"):
             with open("README.md", "r", encoding="utf-8") as f:
                 content = f.read()
             
-            table_header = "| 接口类型 | 首字延迟 (ms) | 总耗时 (ms) | 状态 |"
+            table_header = "| 接口身份 | 首字延迟 (ms) | 总耗时 (ms) | 实时状态 |"
             table_separator = "| :--- | :--- | :--- | :--- |"
             rows = []
             for r in results:
                 if r["status"] == "Success":
-                    rows.append(f"| {r['name']} | {r['ttfb']} | {r['total_time']} | ✅ 正常 |")
+                    rows.append(f"| {r['name']} | {r['ttfb']} | {r['total_time']} | ✅ 极速 |")
                 else:
-                    # 简化显示报错
-                    err_msg = r.get('error','').split('{')[0]
-                    rows.append(f"| {r['name']} | - | - | ❌ 失败 ({err_msg.strip()}) |")
+                    rows.append(f"| {r['name']} | - | - | ❌ 维护中 ({r.get('error','')}) |")
             
-            new_table = f"## 📈 最新测试结果 (更新时间: {output['last_update']} UTC)\n\n{table_header}\n{table_separator}\n" + "\n".join(rows)
+            new_table = f"## 📈 实时性能监控 (更新时间: {output['last_update']} UTC)\n\n{table_header}\n{table_separator}\n" + "\n".join(rows)
             
-            if "## 📈 最新测试结果" in content:
-                parts = content.split("## 📈 最新测试结果")
+            if "## 📈 实时性能监控" in content:
+                parts = content.split("## 📈 实时性能监控")
                 updated_content = parts[0] + new_table
             else:
                 updated_content = content + "\n\n" + new_table
                 
             with open("README.md", "w", encoding="utf-8") as f:
                 f.write(updated_content)
-            print("README.md 表格已更新。")
     except Exception as e:
-        print(f"更新 README 失败: {e}")
-
-    print("测试完成。数据已汇总。")
+        print(f"Update failed: {e}")
 
 if __name__ == "__main__":
     asyncio.run(main())
