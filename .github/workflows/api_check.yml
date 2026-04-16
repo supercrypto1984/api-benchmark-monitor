@@ -9,7 +9,7 @@ jobs:
   benchmark:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # 必须，用于推送结果回仓库
+      contents: write
     steps:
       - uses: actions/checkout@v3
 
@@ -23,10 +23,11 @@ jobs:
 
       - name: Run benchmark
         env:
-          OFFICIAL_KEY: ${{ secrets.OFFICIAL_KEY }}
+          UPSTREAM_KEY: ${{ secrets.UPSTREAM_KEY }}
           PROXY_KEY: ${{ secrets.PROXY_KEY }}
-          # 建议将您的中转 URL 也设置在 Secrets 中，或在此直接替换
-          PROXY_API_URL: ${{ secrets.PROXY_API_URL }}
+          UPSTREAM_URL: "https://model.zhengshuyun.net/v1/responses"
+          PROXY_URL: "http://141.148.136.194:8059/v1/responses"
+          MODEL_NAME: "gpt-5.4"
         run: python scripts/api_benchmark.py
 
       - name: Commit and Push results
