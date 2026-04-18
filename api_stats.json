@@ -1,11 +1,10 @@
 {
-  "last_update": "2026-04-18 20:23:31",
+  "last_update": "2026-04-18 21:23:11",
   "test_results": [
     {
       "name": "官方上游 (Upstream)",
-      "ttfb": 1823,
-      "total_time": 6233,
-      "status": "Success"
+      "error": "Error 401",
+      "status": "Failed"
     },
     {
       "name": "我们的接口 (普通用户)",
