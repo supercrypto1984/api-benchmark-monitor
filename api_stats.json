@@ -1,5 +1,5 @@
 {
-  "last_update": "2026-05-17 19:58:51",
+  "last_update": "2026-05-17 20:49:00",
   "test_results": [
     {
       "name": "官方上游 (Upstream)",
@@ -8,7 +8,7 @@
     },
     {
       "name": "我们的接口 (普通用户)",
-      "error": "Error 503",
+      "error": "Timeout/Network Error",
       "status": "Failed"
     }
   ]
