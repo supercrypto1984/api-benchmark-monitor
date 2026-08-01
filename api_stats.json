@@ -1,9 +1,9 @@
 {
-  "last_update": "2026-07-31 23:50:21",
+  "last_update": "2026-08-01 01:28:26",
   "test_results": [
     {
       "name": "官方上游 (Upstream)",
-      "error": "Error 401",
+      "error": "Error 502",
       "status": "Failed"
     },
     {
